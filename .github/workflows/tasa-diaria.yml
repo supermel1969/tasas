@@ -1,1 +1,34 @@
+name: Guardar tasa USDT/VES
 
+on:
+  schedule:
+    - cron: '59 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  guardar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Consultar tasa y agregar al CSV
+        run: |
+          set -e
+          J=$(curl -sf --retry 3 https://www.usdt.com.ve/api/v1/rates/current)
+          BUY=$(echo "$J" | jq -r '.data.binance.buy_rate')
+          SELL=$(echo "$J" | jq -r '.data.binance.sell_rate')
+          AVG=$(echo "$BUY $SELL" | awk '{printf "%.4f", ($1+$2)/2}')
+          FECHA=$(TZ='America/Caracas' date +%F)
+          UTC=$(date -u +%FT%TZ)
+          [ -f tasas.csv ] || echo "fecha,compra,venta,promedio,capturado_utc" > tasas.csv
+          grep -q "^$FECHA," tasas.csv || echo "$FECHA,$BUY,$SELL,$AVG,$UTC" >> tasas.csv
+
+      - name: Guardar cambios
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add tasas.csv
+          git diff --cached --quiet || (git commit -m "Tasa del día" && git push)
