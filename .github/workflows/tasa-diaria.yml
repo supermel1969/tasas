@@ -2,7 +2,7 @@ name: Guardar tasa USDT/VES
 
 on:
   schedule:
-    - cron: '59 3 * * *'
+    - cron: '0 22 * * *'
   workflow_dispatch:
 
 permissions:
