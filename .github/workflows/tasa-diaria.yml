@@ -21,8 +21,8 @@ jobs:
           BUY=$(echo "$J" | jq -r '.data.binance.buy_rate')
           SELL=$(echo "$J" | jq -r '.data.binance.sell_rate')
           AVG=$(echo "$BUY $SELL" | awk '{printf "%.4f", ($1+$2)/2}')
-          FECHA=$(TZ='America/Caracas' date +%F)
-          UTC=$(date -u +%FT%TZ)
+          UTC=$(echo "$J" | jq -r '.data.captured_at')
+          FECHA=$(TZ='America/Caracas' date -d "$UTC" +%F)
           [ -f tasas.csv ] || echo "fecha,compra,venta,promedio,capturado_utc" > tasas.csv
           grep -q "^$FECHA," tasas.csv || echo "$FECHA,$BUY,$SELL,$AVG,$UTC" >> tasas.csv
 
